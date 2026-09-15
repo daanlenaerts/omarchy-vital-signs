@@ -70,23 +70,22 @@ Panel {
   // showing the user's metrics across a hotplug instead of briefly reverting
   // to the built-in defaults.
   readonly property var storedSettings: {
-    var config = bar && bar.shell ? bar.shell.shellConfig : null
-    if (!config || !config.bar || !config.bar.layout) return null
+    // PluginShellApi exposes the bar subtree as `barConfig` (kept in sync via
+    // syncPluginApis), not a full `shellConfig` — there is no such property.
+    var config = bar && bar.shell ? bar.shell.barConfig : null
+    if (!config || !config.layout) return null
     var sections = ["left", "center", "right"]
     for (var s = 0; s < sections.length; s++) {
-      var entries = config.bar.layout[sections[s]] || []
+      var entries = config.layout[sections[s]] || []
       for (var i = 0; i < entries.length; i++)
         if (entries[i] && String(entries[i].id) === moduleName) return entries[i]
     }
-    var plugins = config.plugins || []
-    for (var p = 0; p < plugins.length; p++)
-      if (plugins[p] && String(plugins[p].id) === moduleName) return plugins[p]
     return null
   }
 
   // Prefer what is on disk, and fall back to the injected copy only when the
-  // config is out of reach. `persistShellConfig` updates `shellConfig` before
-  // it writes the file, so saves still show up immediately.
+  // config is out of reach. The host resyncs `barConfig` right after it
+  // writes shell.json, so saves still show up immediately.
   readonly property var effectiveSettings: storedSettings ? storedSettings : (settings || ({}))
 
   function setting(name, fallback) {
